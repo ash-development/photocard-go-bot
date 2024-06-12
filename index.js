@@ -19,7 +19,7 @@ client.once('ready', () => {
 });
 
 client.on('interactionCreate', async interaction => {
-    if (!interaction.isChatInputCommand()) return;
+    if (!interaction.isCommand()) return;
 
     if (interaction.commandName === 'createpoll') {
         const title = interaction.options.getString('title');
@@ -28,28 +28,32 @@ client.on('interactionCreate', async interaction => {
             return response.author.id === interaction.user.id && response.attachments.size > 0;
         };
 
-        interaction.reply({ content: 'Please attach an image for the poll within the next 60 seconds, or type "skip" to create the poll without an image.', ephemeral: true });
+        await interaction.reply('Please attach an image for the poll within the next 60 seconds, or type "skip" to create the poll without an image.');
 
         const collected = await interaction.channel.awaitMessages({ filter, max: 1, time: 60000, errors: ['time'] })
             .catch(() => {
-                interaction.followUp({ content: 'No image provided. Creating poll without an image.', ephemeral: true });
+                interaction.followUp('No image provided. Creating poll without an image.');
                 return null;
             });
 
-        const embed = new EmbedBuilder()
-            .setTitle(title)
-            .setDescription(EMOJIS.map((emoji, index) => `${emoji}: \n`).join('\n'))
-            .setColor(0x00AE86);
-
         if (collected && collected.size > 0) {
             const imageAttachment = collected.first().attachments.first();
-            embed.setImage(imageAttachment.url);
-        }
+            const embed = new EmbedBuilder()
+                .setTitle(title)
+                .setDescription(EMOJIS.map((emoji, index) => `${emoji}: \n`).join('\n'))
+                .setColor(0x00AE86)
+                .setImage(imageAttachment.url);
 
-        const pollMessage = await interaction.followUp({ embeds: [embed], fetchReply: true });
+            await interaction.channel.send({ embeds: [embed] });
 
-        for (const emoji of EMOJIS) {
-            await pollMessage.react(emoji);
+            await collected.first().delete();
+        } else {
+            const embed = new EmbedBuilder()
+                .setTitle(title)
+                .setDescription(EMOJIS.map((emoji, index) => `${emoji}: \n`).join('\n'))
+                .setColor(0x00AE86);
+
+            await interaction.channel.send({ embeds: [embed] });
         }
     }
 });
