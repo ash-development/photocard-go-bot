@@ -60,33 +60,14 @@ client.on('messageReactionAdd', async (reaction, user) => {
 
     const message = await reaction.message.fetch();
     const embed = message.embeds[0];
-    const updatedDescription = embed.description.split('\n').map((line, index) => {
+    const updatedDescription = embed.description.split('\n').map(line => {
         if (line.startsWith(reaction.emoji.name)) {
-            const usernames = line.split(': ')[1].split(', ').filter(Boolean);
-            if (!usernames.includes(user.username)) {
-                usernames.push(user.username);
+            const userMentions = line.split(': ')[1].split(', ').filter(Boolean);
+            const userMention = `<@${user.id}>`;
+            if (!userMentions.includes(userMention)) {
+                userMentions.push(userMention);
             }
-            return `${reaction.emoji.name}: ${usernames.join(', ')}`;
-        }
-        return line;
-    }).join('\n');
-
-    const updatedEmbed = new EmbedBuilder(embed)
-        .setDescription(updatedDescription);
-
-    await message.edit({ embeds: [updatedEmbed] });
-});
-
-client.on('messageReactionRemove', async (reaction, user) => {
-    if (user.bot) return;
-    if (!EMOJIS.includes(reaction.emoji.name)) return;
-
-    const message = await reaction.message.fetch();
-    const embed = message.embeds[0];
-    const updatedDescription = embed.description.split('\n').map((line, index) => {
-        if (line.startsWith(reaction.emoji.name)) {
-            const usernames = line.split(': ')[1].split(', ').filter(Boolean).filter(username => username !== user.username);
-            return `${reaction.emoji.name}: ${usernames.join(', ')}`;
+            return `${reaction.emoji.name}: ${userMentions.join(', ')}`;
         }
         return line;
     }).join('\n');
