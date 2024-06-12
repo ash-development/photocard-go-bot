@@ -1,0 +1,1 @@
+# photocard-go-bot
